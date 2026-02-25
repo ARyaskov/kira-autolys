@@ -1,0 +1,45 @@
+[package]
+name = "kira-autolys"
+description = "Deterministic, explainable autophagy/lysosome dependency QC for single-cell expression data."
+version = "0.1.0"
+rust-version = "1.95"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/ARyaskov/kira-autolys"
+keywords = [
+    "bioinformatics",
+    "autophagy",
+    "lysosome",
+    "sc-rna",
+    "oncology"
+]
+categories = [
+    "science",
+    "science::bioinformatics",
+    "science::bioinformatics::genomics",
+    "command-line-utilities"
+]
+
+[dependencies]
+flate2 = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4", features = ["derive"] }
+rayon = { version = "1", optional = true }
+memmap2 = "0.9"
+chrono = { version = "0.4", default-features = true, features = ["clock"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+kira-shared-sc-cache = "0.1"
+kira-scio = "0.1"
+
+
+[dependencies.hdf5]
+version = "0.8"
+optional = true
+
+[features]
+default = ["simd"]
+h5ad = ["hdf5", "kira-scio/h5ad"]
+simd = []
+parallel = ["rayon"]

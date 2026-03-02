@@ -4,6 +4,7 @@ pub mod expr;
 pub mod genesets;
 pub mod io;
 pub mod math;
+pub mod metrics;
 pub mod model;
 pub mod pipeline;
 pub mod report;

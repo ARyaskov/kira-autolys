@@ -1,4 +1,3 @@
-
 use super::*;
 use crate::model::cli::RunMode;
 use crate::model::ctx::NormalizedExpr;
@@ -130,6 +129,7 @@ fn test_summary_json_structure() {
     assert!(value.get("tool").is_some());
     assert!(value.get("dataset_stats").is_some());
     assert!(value.get("top_findings").is_some());
+    assert!(value.get("autolys_extension").is_some());
     let meta: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(out_dir.join("metadata.json")).unwrap())
             .unwrap();

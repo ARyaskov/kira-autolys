@@ -7,11 +7,12 @@ use serde_json::json;
 
 use crate::config::thresholds::Thresholds;
 use crate::genesets::v1;
+use crate::metrics::autolys_extension;
 use crate::model::cli::RunMode;
-use crate::model::ctx::{Ctx, SampleInfo};
+use crate::model::ctx::{AutolysExtensionMetrics, Ctx, SampleInfo};
 use crate::stage_error::StageError;
 
-const TSV_HEADER: &str = "id\tAFP\tAFP_initiation\tAFP_elongation\tAFP_degradation\tAFP_cargo\tAFP_stall\tLDS\tLDS_vatp\tLDS_prot\tLDS_mem\tglobal_load\tTFEBp\tmTORp\tTFEB_MTOR\tTFEB_MTOR_diff\tPROLIF\tAPOP_ready\tz_AFP\tz_LDS\tz_PROLIF\tz_APOP\tSSM\tflag_SSM_high\tflag_AFP_high\tflag_LDS_high\tflag_PROLIF_low\tflag_APOP_low";
+const TSV_HEADER: &str = "id\tAFP\tAFP_initiation\tAFP_elongation\tAFP_degradation\tAFP_cargo\tAFP_stall\tLDS\tLDS_vatp\tLDS_prot\tLDS_mem\tglobal_load\tTFEBp\tmTORp\tTFEB_MTOR\tTFEB_MTOR_diff\tPROLIF\tAPOP_ready\tz_AFP\tz_LDS\tz_PROLIF\tz_APOP\tSSM\tflag_SSM_high\tflag_AFP_high\tflag_LDS_high\tflag_PROLIF_low\tflag_APOP_low\tinit_core\tform_core\tlyso_core\tacid_core\tcargo_core\tAIS\tAFS\tLCI\tAFP_ext\tCDS\tASM\tinitiation_high\tformation_high\tlysosome_high\tbottleneck_risk\tclearance_deficit\tautolys_stress_mode\tmito_core\tMitophagyScore\tmitophagy_high";
 const PIPELINE_AUTOLYS_HEADER: &str = "id\tbarcode\tsample\tcondition\tspecies\tlibsize\tnnz\texpressed_genes\tlysosomal_load\tautophagy_flux_proxy\tcatabolic_bias\trecycling_efficiency\tstress_autophagy_index\tregime\tflags\tconfidence";
 const PIPELINE_PANELS_HEADER: &str = "panel_id\tpanel_name\tpanel_group\tpanel_size_defined\tpanel_size_mappable\tmissing_genes\tcoverage_median\tcoverage_p10\tsum_median\tsum_p90\tsum_p99";
 const REGIMES: [&str; 6] = [
@@ -62,16 +63,22 @@ pub fn run_stage6(ctx: &Ctx, out_dir: &Path, write_scores: bool) -> Result<(), S
         .survival_stats
         .as_ref()
         .ok_or_else(|| StageError::Validation("survival stats missing".to_string()))?;
+    let extension = ctx
+        .autolys_extension
+        .clone()
+        .unwrap_or_else(|| AutolysExtensionMetrics::default_for_n_obs(ctx.n_obs));
 
     fs::create_dir_all(out_dir)?;
 
     if write_scores {
-        write_scores_tsv(out_dir, ctx, autophagy, lysosome, regulatory, survival)?;
+        write_scores_tsv(
+            out_dir, ctx, autophagy, lysosome, regulatory, survival, &extension,
+        )?;
     }
     write_panels_report(out_dir, ctx)?;
     write_metadata_json(out_dir, ctx, input_type, mode)?;
     write_summary_json(
-        out_dir, ctx, autophagy, lysosome, regulatory, survival, stats,
+        out_dir, ctx, autophagy, lysosome, regulatory, survival, stats, &extension,
     )?;
 
     let summary_text = build_stdout_summary(ctx, autophagy, lysosome, survival);
@@ -557,6 +564,7 @@ fn write_scores_tsv(
     lysosome: &crate::model::ctx::LysosomeMetrics,
     regulatory: &crate::model::ctx::RegulatoryMetrics,
     survival: &crate::model::ctx::SurvivalMetrics,
+    extension: &AutolysExtensionMetrics,
 ) -> Result<(), StageError> {
     let path = out_dir.join("scores.tsv");
     let file = File::create(path)?;
@@ -593,6 +601,26 @@ fn write_scores_tsv(
         write_bool(&mut writer, survival.flag_lds_high[idx])?;
         write_bool(&mut writer, survival.flag_prolif_low[idx])?;
         write_bool(&mut writer, survival.flag_apop_low[idx])?;
+        write_f32(&mut writer, extension.init_core[idx])?;
+        write_f32(&mut writer, extension.form_core[idx])?;
+        write_f32(&mut writer, extension.lyso_core[idx])?;
+        write_f32(&mut writer, extension.acid_core[idx])?;
+        write_f32(&mut writer, extension.cargo_core[idx])?;
+        write_f32(&mut writer, extension.ais[idx])?;
+        write_f32(&mut writer, extension.afs[idx])?;
+        write_f32(&mut writer, extension.lci[idx])?;
+        write_f32(&mut writer, extension.afp[idx])?;
+        write_f32(&mut writer, extension.cds[idx])?;
+        write_f32(&mut writer, extension.asm[idx])?;
+        write_bool(&mut writer, extension.initiation_high[idx])?;
+        write_bool(&mut writer, extension.formation_high[idx])?;
+        write_bool(&mut writer, extension.lysosome_high[idx])?;
+        write_bool(&mut writer, extension.bottleneck_risk[idx])?;
+        write_bool(&mut writer, extension.clearance_deficit[idx])?;
+        write_bool(&mut writer, extension.autolys_stress_mode[idx])?;
+        write_f32(&mut writer, extension.mito_core[idx])?;
+        write_f32(&mut writer, extension.mitophagy_score[idx])?;
+        write_bool(&mut writer, extension.mitophagy_high[idx])?;
         writeln!(writer)?;
     }
 
@@ -653,6 +681,7 @@ fn write_summary_json(
     regulatory: &crate::model::ctx::RegulatoryMetrics,
     survival: &crate::model::ctx::SurvivalMetrics,
     stats: &crate::model::ctx::SurvivalStats,
+    extension: &AutolysExtensionMetrics,
 ) -> Result<(), StageError> {
     let missing_map = build_missing_map(ctx);
     let thresholds = ctx.thresholds.unwrap_or_default();
@@ -710,7 +739,8 @@ fn write_summary_json(
             "ssm_high_count": ssm_high_count,
             "ssm_high_fraction": ssm_high_fraction,
             "examples": examples,
-        }
+        },
+        "autolys_extension": autolys_extension::build_summary_block(ctx, extension),
     });
 
     let path = out_dir.join("summary.json");

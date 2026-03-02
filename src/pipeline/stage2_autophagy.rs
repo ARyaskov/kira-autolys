@@ -1,4 +1,5 @@
 use crate::genesets::v1;
+use crate::metrics::autolys_extension;
 use crate::model::ctx::{AutophagyMetrics, Ctx, NormalizedExpr};
 use crate::stage_error::StageError;
 
@@ -92,6 +93,7 @@ pub fn run_stage2(ctx: &mut Ctx) -> Result<(), StageError> {
     }
 
     ctx.autophagy = Some(metrics);
+    ctx.autolys_extension = Some(autolys_extension::compute(ctx));
     Ok(())
 }
 

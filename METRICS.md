@@ -166,6 +166,53 @@ Response classes:
 `RDR = ERC/(LDI+EPS)`,
 `LMRCI = z(RDR) + z(ERC) - z(LDI)`.
 
+## Autolys Extension Metrics (Stage 2 additive extension)
+
+The autolys extension derives single-sample compatible, deterministic proxy metrics from one normalized matrix (`E[g,obs]`), using concise mechanism-grounded panels:
+- initiation (ULK/AMPK gate)
+- autophagosome formation (ATG conjugation)
+- lysosomal identity and acidification
+- cargo adaptor load
+- optional mitophagy context
+
+Panel summarization:
+- 10% trimmed mean per observation/panel.
+- If expressed genes in panel `< MIN_GENES` (2), panel core is `NaN`.
+
+Robust normalization:
+- `Z = (x - median) / (1.4826*MAD + EPS)`.
+- If `MAD == 0`, finite values map to `0`.
+
+Per-observation extension metrics:
+- `AIS = Z(init_core)` (initiation engagement)
+- `AFS = Z(form_core)` (autophagosome machinery engagement)
+- `LCI = 0.6*Z(lyso_core) + 0.4*Z(acid_core)` (lysosomal capacity)
+- `Drive = 0.5*AIS + 0.5*AFS`
+- `Throughput = LCI`
+- `AFP_ext = Drive - Throughput` (autophagy flux proxy imbalance)
+- `CDS = max(0, Z(cargo_core) - LCI)` (clearance deficit proxy)
+- `ASM = max(0, 0.4*max(0,AFP_ext) + 0.3*CDS + 0.3*max(0,AIS))` (autolys stress mode)
+
+Optional mitophagy axis:
+- `MitophagyScore = Z(mito_core)` when panel genes are mappable; otherwise `NaN`.
+
+Flags:
+- `initiation_high`: `AIS >= 2.0`
+- `formation_high`: `AFS >= 2.0`
+- `lysosome_high`: `LCI >= 2.0`
+- `bottleneck_risk`: `AFP_ext >= 1.5`
+- `clearance_deficit`: `CDS >= 1.5`
+- `autolys_stress_mode`: `ASM >= 2.0`
+- `mitophagy_high`: `MitophagyScore >= 2.0`
+
+NaN policy:
+- NaN scores do not trigger flags.
+- Missingness is reported in `summary.json` / `summary_v2.json` under `autolys_extension`.
+
+Caveats:
+- `AFP_ext` is a transcriptomic proxy and does **not** measure biochemical flux directly.
+- Interpret jointly with proteostasis/clearance outputs (for example `kira-proteoqc`) and mitochondrial stress/damage context (for example `kira-mitoqc`).
+
 ## Pipeline Summary Metrics (`autolys.tsv`, Stage 6)
 
 Raw composites:

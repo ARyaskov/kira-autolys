@@ -1,4 +1,3 @@
-
 use super::*;
 use crate::config::thresholds::Thresholds;
 use crate::model::cohort_view::{CohortView, SampleInfo};

@@ -3,6 +3,7 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 
 use crate::config::thresholds::Thresholds;
+use crate::metrics::autolys_extension;
 use crate::model::ctx::Ctx;
 use crate::model::schema_v2 as schema;
 use crate::stage_error::StageError;
@@ -192,11 +193,21 @@ fn write_summary_v2(
         });
     }
 
+    let fallback_extension;
+    let extension = if let Some(ext) = ctx.autolys_extension.as_ref() {
+        ext
+    } else {
+        fallback_extension =
+            crate::model::ctx::AutolysExtensionMetrics::default_for_n_obs(ctx.n_obs);
+        &fallback_extension
+    };
+
     let summary = serde_json::json!({
         "tool": tool,
         "input": input,
         "thresholds": thresholds,
         "dataset_stats": dataset_stats,
+        "autolys_extension": autolys_extension::build_summary_block(ctx, extension),
         "observations": observations,
     });
 

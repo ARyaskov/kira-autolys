@@ -1,4 +1,3 @@
-
 use super::*;
 use crate::model::ctx::{
     AutophagyMetrics, AutophagySelectivityMetrics, CouplingMetrics, CrossOrganelleMetrics, Ctx,
@@ -155,6 +154,7 @@ fn test_summary_v2_structure() {
         .unwrap();
     assert_eq!(schema, "v2");
     assert!(value.get("observations").is_some());
+    assert!(value.get("autolys_extension").is_some());
     let _ = std::fs::remove_dir_all(out_dir);
 }
 

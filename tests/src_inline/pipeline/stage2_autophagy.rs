@@ -1,4 +1,3 @@
-
 use super::*;
 use crate::model::ctx::Ctx;
 
@@ -37,6 +36,7 @@ fn test_autophagy_metrics() {
 
     run_stage2(&mut ctx).unwrap();
     let metrics = ctx.autophagy.as_ref().unwrap();
+    let extension = ctx.autolys_extension.as_ref().unwrap();
 
     assert_eq!(metrics.initiation.len(), 2);
     assert_eq!(metrics.elongation.len(), 2);
@@ -66,6 +66,8 @@ fn test_autophagy_metrics() {
     assert_eq!(metrics.degradation[1], 2.0);
     assert_eq!(metrics.cargo[1], 0.0);
     assert_eq!(metrics.stall[1], 0.0);
+    assert_eq!(extension.ais.len(), 2);
+    assert_eq!(extension.asm.len(), 2);
 }
 
 #[test]

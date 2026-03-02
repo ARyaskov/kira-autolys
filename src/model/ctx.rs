@@ -260,6 +260,57 @@ pub struct LysosomalROSMetrics {
 }
 
 #[derive(Debug, Clone)]
+pub struct AutolysExtensionMetrics {
+    pub init_core: Vec<f32>,
+    pub form_core: Vec<f32>,
+    pub lyso_core: Vec<f32>,
+    pub acid_core: Vec<f32>,
+    pub cargo_core: Vec<f32>,
+    pub mito_core: Vec<f32>,
+    pub ais: Vec<f32>,
+    pub afs: Vec<f32>,
+    pub lci: Vec<f32>,
+    pub afp: Vec<f32>,
+    pub cds: Vec<f32>,
+    pub asm: Vec<f32>,
+    pub mitophagy_score: Vec<f32>,
+    pub initiation_high: Vec<bool>,
+    pub formation_high: Vec<bool>,
+    pub lysosome_high: Vec<bool>,
+    pub bottleneck_risk: Vec<bool>,
+    pub clearance_deficit: Vec<bool>,
+    pub autolys_stress_mode: Vec<bool>,
+    pub mitophagy_high: Vec<bool>,
+}
+
+impl AutolysExtensionMetrics {
+    pub fn default_for_n_obs(n_obs: usize) -> Self {
+        Self {
+            init_core: vec![f32::NAN; n_obs],
+            form_core: vec![f32::NAN; n_obs],
+            lyso_core: vec![f32::NAN; n_obs],
+            acid_core: vec![f32::NAN; n_obs],
+            cargo_core: vec![f32::NAN; n_obs],
+            mito_core: vec![f32::NAN; n_obs],
+            ais: vec![f32::NAN; n_obs],
+            afs: vec![f32::NAN; n_obs],
+            lci: vec![f32::NAN; n_obs],
+            afp: vec![f32::NAN; n_obs],
+            cds: vec![f32::NAN; n_obs],
+            asm: vec![f32::NAN; n_obs],
+            mitophagy_score: vec![f32::NAN; n_obs],
+            initiation_high: vec![false; n_obs],
+            formation_high: vec![false; n_obs],
+            lysosome_high: vec![false; n_obs],
+            bottleneck_risk: vec![false; n_obs],
+            clearance_deficit: vec![false; n_obs],
+            autolys_stress_mode: vec![false; n_obs],
+            mitophagy_high: vec![false; n_obs],
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct RegulatoryMetrics {
     pub tfeb: Vec<f32>,
     pub mtor: Vec<f32>,
@@ -328,6 +379,7 @@ pub struct Ctx {
     pub missing_genes: Vec<MissingGenes>,
     pub normalized: Option<Box<dyn NormalizedExpr>>,
     pub autophagy: Option<AutophagyMetrics>,
+    pub autolys_extension: Option<AutolysExtensionMetrics>,
     pub lysosome: Option<LysosomeMetrics>,
     pub lysosomal_damage: Option<LysosomalDamageMetrics>,
     pub autophagy_selectivity: Option<AutophagySelectivityMetrics>,
